@@ -1,1 +1,105 @@
+#include <iostream>
+#include <vector>
+#include <string>
 
+// Хеш — это какая-то функция, сопоставляющая объектам какого-то множества числовые значения из ограниченного промежутка.
+
+struct PolynomialHash {
+  int64_t operator()(const std::string &str) {
+    const static int32_t p = 1000000007;
+    const static int16_t x = 263;
+    int64_t sum = 0;
+    int64_t x_pow = 1;
+    for (size_t i = 0; i < str.length(); i++) {
+      sum = (sum + (str[i] * x_pow % p)) % p;
+      x_pow = (x_pow * x) % p;
+    }
+    return sum;
+  }
+};
+
+// Прямая адерсация
+class DirectAddressTable {
+public:
+  DirectAddressTable() : max_size_(100) {}
+  DirectAddressTable(size_t size) : max_size_(size) {
+    table_.resize(size, "-1");
+  }
+  ~DirectAddressTable() = default;
+  void Hash(size_t key, std::string value) {
+    if (table_[key] == "-1") {
+      table_[key] = value;
+      std::cout << "Successful\n";
+      return;
+    }
+    std::cout << "its impossible";
+  }
+  void GetValue(size_t key) {
+    if (table_[key] != "-1") {
+      std::cout << table_[key] << "\n";
+      return;
+    }
+    std::cout << "key doesnt exist\n";
+  }
+  void Del(size_t key) {
+    if (table_[key] != "-1") {
+      table_[key] = "-1";
+      std::cout << "Successful\n";
+      return;
+    }
+    std::cout << "value has already been empty\n";
+  }
+private:
+  std::vector<std::string> table_;
+  size_t max_size_;
+};
+
+//  Метод цепочек
+class HashTable {
+private:
+  class List {
+  private:
+    struct Node {
+      Node *next;
+      Node *prev;
+      std::string key;
+      Node(const std::string &key);
+      Node(const std::string &key, Node *next, Node *prev);
+    };
+    
+  public:
+    List();
+    void Insert(const std::string &key);
+    void Remove(const std::string &key);
+    bool Find(const std::string &key);
+    void Print();
+    ~List();
+    
+  private:
+    Node *NodeFinder(const std::string &key);
+    Node *head;
+    Node *tail;
+  };
+public:
+  HashTable(long long n_buckets);
+  bool Find(const std::string &key);
+  void Add(const std::string &key);
+  void Check(long long bucket);
+  void Remove(const std::string &key);
+  ~HashTable();
+  
+private:
+  const long long n_buckets;
+  List *buckets;
+  PolynomialHash hash;
+};
+
+int main() {
+  DirectAddressTable hash(10);
+  hash.Hash(1, "Maxim");
+  hash.Hash(2, "Lera");
+  hash.GetValue(1);
+  hash.Del(1);
+  hash.GetValue(1);
+  hash.Del(1);
+}
