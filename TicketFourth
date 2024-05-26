@@ -1,0 +1,136 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+#include <set>
+
+const int maxn = 1e5;
+bool used[maxn]; // тут будем отмечать посещенные вершины
+std::vector<int> g[1000]; // список смежности
+int size = 100; // количество вершин в графе
+
+// Обход в глубину
+void DFS(int v) {
+  used[v] = true;
+  for (int u : g[v])
+    if (!used[u])
+      DFS(u);
+}
+/*
+ Асимптотика: O(V + E) - если представлен списком смежности
+ */
+
+
+// Проверка на связность
+/*
+ Компонентой связности неориентированного графа называется подмножество вершин, достижимых из какой-то заданной вершины. Как следствие неориентированности, все вершины компоненты связности достижимы друг из друга.
+ */
+
+size_t component[maxn]; // тут будут номера компонент изначально, заполненные нулями
+void DFS_component(int v, size_t num) {
+  component[v] = num;
+  for (int u : g[v]) {
+    if (!component[u]) { // если номер не присвоен, то мы там ещё не были
+      DFS_component(u, num);
+    }
+  }
+}
+
+bool Connectivity() {
+  int num = 0;
+  for (int v = 0; v < size; v++) {
+    if (!component[v]) {
+      DFS_component(v, ++num);
+    }
+  }
+  return num == 1;
+}
+/*
+ Асимптотика: O(V + E)
+ */
+
+// Жадная функция для раскраски графа
+void GreedyColoring() {
+  int result[maxn];                                    // Хранение цвета для каждой вершины
+  bool available[maxn];                                // Доступные цвета
+  std::memset(result, -1, sizeof(result));             // Инициализация вершин как нераскрашенных
+  result[0] = 0;                                       // Назначаем первый цвет первой вершине
+  std::memset(available, true, sizeof(available));     // Инициализация всех цветов как доступных
+  
+  for (int u = 1; u < size; u++) {                     // Раскраска остальных вершин
+    for (int i : g[u]) {                               // Помечаем цвета смежных вершин как недоступные
+      if (result[i] != -1) {
+        available[result[i]] = false;
+      }
+    }
+    int cr;                                            // Находим первый доступный цвет
+    for (cr = 0; cr < size; cr++) {
+      if (available[cr]) break;
+    }
+    result[u] = cr;                                   // Присваиваем найденный цвет вершине
+    std::memset(available, true, sizeof(available));  // Сброс доступных цветов для следующей итерации
+  }
+  
+    // Вывод результата
+  for (int u = 0; u < size; u++) {
+    std::cout << "Vertex " << u << " ---> Color " << result[u] << std::endl;
+  }
+}
+
+// Проверка на цикл
+enum Color { white, gray, black };
+
+std::vector<Color> used_cycle;
+std::vector<std::vector<int>> g_cycle;
+std::vector<int> p;      // массив предков
+int cycle_start = -1;    // начало цикла
+int cycle_end;           // конец цикла
+
+bool DFS_cycle(int v) {
+  used[v] = gray;        // посещенная вершина
+  for (int u : g_cycle[v]) {
+    if (used[u] == white) {
+      p[u] = v;         // сохранения предка
+      if (DFS_cycle(u)) {
+        return true;
+      }
+    } else if (used[u] == gray) {  // цикл обнаружен
+      cycle_end = v;
+      cycle_start = u;
+      return true;
+    }
+  }
+  used[v] = black;
+  return false;
+}
+
+// Поиск эйлерового цикла
+/*
+ Эйлеров путь — это путь в графе, проходящий через все его рёбра.
+ Эйлеров цикл — это эйлеров путь, являющийся циклом.
+ */
+
+std::set<int> g_euler[maxn];
+
+bool IsEulerian() {
+  for (int i = 0; i < maxn; ++i) {
+    if (!g_euler[i].empty() && (g_euler[i].size() % 2 != 0)) {
+      return false; // Возвращаем false, если нашли вершину с нечетной степенью
+    }
+  }
+  return true; // Все вершины с рёбрами имеют четные степени
+}
+
+void Euler(int v) {
+  while (!g_euler[v].empty()) {
+    auto u = *g_euler[v].begin();
+    g_euler[v].erase(u);
+    g_euler[u].erase(v); // если граф ориентированный, обратное ребро удалять не надо
+    Euler(u);
+  }
+  std::cout << v <<  " ";
+}
+/*
+ Асимптотика Эйлеров ли граф: O(V)
+ Асимптотика нахождения цикла: O(V + E)
+*/
+
