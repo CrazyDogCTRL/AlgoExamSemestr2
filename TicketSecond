@@ -1,1 +1,147 @@
+#include <iostream>
+#include <vector>
+#include <string>
 
+// Хеш — это какая-то функция, сопоставляющая объектам какого-то множества числовые значения из ограниченного промежутка.
+
+struct PolynomialHash {
+  int64_t operator()(const std::string &str) {
+    const static int32_t p = 1000000007;
+    const static int16_t x = 263;
+    int64_t sum = 0;
+    int64_t x_pow = 1;
+    for (size_t i = 0; i < str.length(); i++) {
+      sum = (sum + (str[i] * x_pow % p)) % p;
+      x_pow = (x_pow * x) % p;
+    }
+    return sum;
+  }
+};
+
+// Прямая адерсация
+class DirectAddressTable {
+public:
+  DirectAddressTable() : max_size_(100) {}
+  DirectAddressTable(size_t size) : max_size_(size) {
+    table_.resize(size, "-1");
+  }
+  ~DirectAddressTable() = default;
+  void Hash(size_t key, std::string value) {
+    if (table_[key] == "-1") {
+      table_[key] = value;
+      std::cout << "Successful\n";
+      return;
+    }
+    std::cout << "its impossible";
+  }
+  void GetValue(size_t key) {
+    if (table_[key] != "-1") {
+      std::cout << table_[key] << "\n";
+      return;
+    }
+    std::cout << "key doesnt exist\n";
+  }
+  void Del(size_t key) {
+    if (table_[key] != "-1") {
+      table_[key] = "-1";
+      std::cout << "Successful\n";
+      return;
+    }
+    std::cout << "value has already been empty\n";
+  }
+private:
+  std::vector<std::string> table_;
+  size_t max_size_;
+};
+
+//  Открытой адресации (двумя указателями)
+class HashTable {
+private:
+  struct Node {
+    int64_t key;
+    std::string value;
+    bool deleted;
+    Node() : key(0), value(""), deleted(false) {}
+    Node(int64_t key, std::string value) : key(key), value(value), deleted(false) {}
+  };
+  Node *table;
+  int64_t size;
+  int64_t filledCount;
+  
+  int64_t hash(int64_t key, int64_t size) {
+    return std::abs(key) % size;
+  }
+  
+  int64_t hash2(int64_t key, int64_t size) {
+    return 7 - (std::abs(key) % 7);
+  }
+  
+  int64_t doubleHash(int64_t key, int64_t size, int64_t attempt) {
+    return (hash(key, size) + attempt * hash2(key, size)) % size;
+  }
+  
+  void Resize(int64_t newSize);
+
+public:
+  HashTable(int64_t initialSize) : size(initialSize), filledCount(0) {
+    table = new Node[size];
+  }
+  
+  void Push(int64_t key, std::string value) {
+    int64_t index = hash(key, size);
+    int64_t attempt = 0;
+    while (table[index].key != 0 && !table[index].deleted && attempt < size) {
+      index = doubleHash(key, size, attempt);
+      attempt++;
+    }
+    if (table[index].key == 0 || table[index].deleted) {
+      table[index] = Node(key, value);
+      filledCount++;
+    }
+    if (filledCount >= size * 0.75) {
+      Resize(size * 2);
+    }
+  }
+  
+  bool Pop(int64_t key) {
+    int64_t index = hash(key, size);
+    int64_t i = 0;
+    while (table[index].key != key && i < size) {
+      index = doubleHash(key, size, i);
+      i++;
+    }
+    if (table[index].key == key && !table[index].deleted) {
+      table[index].deleted = true;
+      filledCount--;
+      return true;
+    }
+    return false;
+  }
+  
+  bool Search(int64_t key) {
+    int64_t index = hash(key, size);
+    int64_t i = 0;
+    while (table[index].key != key && i < size) {
+      index = doubleHash(key, size, i);
+      i++;
+    }
+    if (table[index].key == key && !table[index].deleted) {
+      return true;
+    }
+    return false;
+  }
+  
+  ~HashTable() {
+    delete[] table;
+  }
+};
+
+int main() {
+  DirectAddressTable hash(10);
+  hash.Hash(1, "Maxim");
+  hash.Hash(2, "Lera");
+  hash.GetValue(1);
+  hash.Del(1);
+  hash.GetValue(1);
+  hash.Del(1);
+}
