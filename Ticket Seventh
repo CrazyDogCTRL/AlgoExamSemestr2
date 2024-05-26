@@ -1,0 +1,107 @@
+#include <iostream>
+#include <set>
+#include <vector>
+#include <queue>
+
+#define INF std::numeric_limits<int64_t>::max()
+// Дейкстра
+/*Инициализация:
+Расстояние до стартовой вершины равно 0, расстояния до остальных вершин равны бесконечности.
+Повторить V раз:
+Из всех вершин, расстояния до которых ещё не являются окончательными, выбрать ближайшую и пометить расстояние до неё как окончательное.
+Затем просмотреть рёбра из этой вершины и попробовать улучшить расстояния до вершин-соседей.
+ */
+
+struct Edge {
+  int64_t from;
+  int64_t to;
+  int64_t weight;
+  Edge() : Edge(0, 0, 0) {
+  }
+  Edge(int64_t from, int64_t to, int64_t weight) : from(from), to(to), weight(weight) {
+  }
+};
+
+class DirGraphAdjList {
+public:
+  DirGraphAdjList(size_t n_vertices, const std::vector<std::pair<int64_t, int64_t>> &edges,
+                  const std::vector<int64_t> &weights)
+  : adj_list_(n_vertices) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+      adj_list_[edges[i].first].emplace_back(edges[i].first, edges[i].second, weights[i]);
+    }
+  }
+  std::vector<int64_t> FindDistsDejkstra(size_t node) {
+    std::vector<int64_t> dist(adj_list_.size(), INF);
+    std::vector<bool> used(adj_list_.size(), false);
+    dist[node] = 0;
+    for (size_t i = 0; i < adj_list_.size(); ++i) {
+      int64_t nearest = -1;
+      for (size_t cur_node = 0; cur_node < adj_list_.size(); ++cur_node) { // ищем минимальное расстояние
+        if (!used[cur_node] && (nearest == -1 || dist[cur_node] < dist[nearest])) {
+          nearest = static_cast<int64_t>(cur_node);
+        }
+      }
+      if (dist[nearest] == INF) { // если не одна компонента связности
+        break;
+      }
+      used[nearest] = true;
+      for (const Edge &e : adj_list_[nearest]) {
+        if (!used[e.to] && dist[e.to] > dist[nearest] + e.weight) {
+          dist[e.to] = dist[nearest] + e.weight;
+        }
+      }
+    }
+    return dist;
+  }
+  
+private:
+  std::vector<std::vector<Edge>> adj_list_;
+};
+// Асимптотика O(V^2 + E), но для плотных графов примерно (V^2)
+
+// Улучшения
+/*
+ Можно улучшить асимптотику, если искать nearest через приоритетную кучу, тогда асимптотика будет:
+ O(E* logV) для разряженных графов и O(V^2 * logV) для полных
+ */
+struct Compare {
+  bool operator()(const std::pair<int64_t, size_t> &a, const std::pair<int64_t, size_t> &b) {
+    return a.first > b.first;
+  }
+};
+
+class DirGraphAdjList_queue {
+public:
+  DirGraphAdjList_queue(size_t n_vertices, const std::vector<std::pair<int64_t, int64_t>> &edges,
+                  const std::vector<int64_t> &weights)
+  : adj_list_(n_vertices) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+      adj_list_[edges[i].first].emplace_back(edges[i].first, edges[i].second, weights[i]);
+    }
+  }
+  std::vector<int64_t> FindDistsDejkstraHeap(size_t node) {
+    std::vector<int64_t> dist(adj_list_.size(), INF);
+    std::vector<bool> used(adj_list_.size(), false);
+    std::priority_queue<std::pair<int64_t, size_t>, std::vector<std::pair<int64_t, size_t>>, Compare> queue;
+    dist[node] = 0;
+    queue.emplace(0, node);
+    while (!queue.empty()) {
+      auto [d, v] = queue.top();
+      queue.pop();
+      if (d != dist[v]) {
+        continue;
+      }
+      for (Edge e : adj_list_[v]) {
+        if (dist[v] + e.weight < dist[e.to]) {
+          dist[e.to] = dist[v] + e.weight;
+          queue.emplace(dist[e.to], e.to);
+        }
+      }
+    }
+    return dist;
+  }
+  
+private:
+  std::vector<std::vector<Edge>> adj_list_;
+};
