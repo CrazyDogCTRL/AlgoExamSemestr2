@@ -1,0 +1,71 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+#define INF 1e9
+
+// BFS
+/*
+ BFS - обход графа в ширину
+ */
+
+std::vector<int> BFS(std::vector<std::vector<int>>& graph, int start) {
+  std::vector<int> dist(graph.size(), INF);
+  std::vector<int> from(graph.size(), -1); // для восстановления ответа
+  std::queue<int> q;
+  dist[start] = 0;
+  q.push(start);
+  while (!q.empty()) {
+    int v = q.front();
+    q.pop();
+    for (auto to : graph[v]) {
+      if (dist[to] > dist[v] + 1) {
+        dist[to] = dist[v] + 1;
+        from[to] = v;
+        q.push(to);
+      }
+    }
+  }
+  return dist;
+}
+
+/*
+ Асимптотика O(V + E) - если список смежности
+ если матрица смежности, то O(V^2)
+ */
+
+// kBFS - для вычисления кратчайшего расстония для взвешенного графа
+const int n = 100; // количество вершин
+const int k = 50; // максимальный вес ребра
+struct Edge {
+  int vertex;
+  int to;
+  int weight;
+  Edge(): vertex(0), to(0), weight(0) {
+  }
+  Edge(int vertex, int to, int weight): vertex(vertex), to(to), weight(weight) {
+  }
+};
+
+std::vector<int> kBFS(const std::vector<std::vector<Edge>>& graph, int start) {
+  std::vector<int> dist(n, INF);
+  std::vector<std::queue<int>> queues; // в очереди queues[d] храню вершины с длиной d
+  queues[0].push(start);
+  dist[start] = 0;
+  for (int d = 0; d < n * k; ++d) {
+    while (!queues[d].empty()) {
+      auto v = queues[d].front();
+      queues[d].pop();
+      if (dist[v] < d) {
+        continue;
+      }
+      for (auto ch : graph[v]) {
+        if (dist[ch.vertex] > dist[v] + ch.weight) {
+          dist[ch.vertex] = dist[v] + ch.weight;
+          queues[dist[ch.vertex]].push(ch.vertex);
+        }
+      }
+    }
+  }
+  return dist;
+}
+// Асимптотика O(N * K + E)
