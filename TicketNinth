@@ -1,0 +1,61 @@
+#include <vector>
+#include <cstdint>
+#include <iostream>
+#include <algorithm>
+#include <limits>
+
+// Флойд-Уоршелл
+
+#define INF std::numeric_limits<int64_t>::max()
+
+struct Edge {
+  int64_t from;
+  int64_t to;
+  int64_t weight;
+  Edge() : Edge(0, 0, 0) {
+  }
+  Edge(int64_t from, int64_t to, int64_t weight) : from(from), to(to), weight(weight) {
+  }
+};
+
+class DirGraphAdjList {
+public:
+  DirGraphAdjList(int64_t n_vertices, const std::vector<std::pair<int64_t, int64_t>> &edges,
+                  const std::vector<int64_t> &weights)
+  : adj_list_(n_vertices) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+      adj_list_[edges[i].first].emplace_back(edges[i].first, edges[i].second, weights[i]);
+    }
+  }
+  std::vector<std::vector<int64_t>> FindDistsFloydWarshall() {
+    std::vector<std::vector<int64_t>> matrix(adj_list_.size(), std::vector<int64_t>(adj_list_.size(), INF));
+    for (const std::vector<Edge> &edges : adj_list_) {
+      for (const Edge &edge : edges) {
+        matrix[edge.from][edge.to] = edge.weight;
+      }
+    }
+    for (size_t node = 0; node < adj_list_.size(); ++node) {
+      matrix[node][node] = 0;
+    }
+    for (size_t new_node = 0; new_node < adj_list_.size(); ++new_node) {
+      for (size_t from = 0; from < adj_list_.size(); ++from) {
+        for (size_t to = 0; to < adj_list_.size(); ++to) {
+          if (matrix[from][new_node] == INF || matrix[new_node][to] == INF) {
+            continue;
+          }
+          if (matrix[from][to] > matrix[from][new_node] + matrix[new_node][to]) {
+            matrix[from][to] = matrix[from][new_node] + matrix[new_node][to];
+          }
+        }
+      }
+    }
+    return matrix;
+  }
+  
+private:
+  std::vector<std::vector<Edge>> adj_list_;
+};
+
+/*
+ Асимптотика: O(V^3)
+ */
