@@ -1,0 +1,118 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+#include <set>
+
+const int maxn = 1e5;
+bool used[maxn]; // тут будем отмечать посещенные вершины
+std::vector<int> g[1000]; // список смежности
+int size = 100; // количество вершин в графе
+
+// Обход в глубину
+void DFS(int v) {
+  used[v] = true;
+  for (int u : g[v])
+    if (!used[u])
+      DFS(u);
+}
+/*
+ Асимптотика: O(V + E) - если представлен списком смежности
+ */
+
+// Алгоритм топологической сортировки
+/*
+ Тополическая сортировка - сортировка, при котором выполняется условие: порядок вершин, в котором все рёбра графа вели из более ранней вершины в более позднюю.
+ */
+
+std::vector<int> t; // массив для хранения вершин в порядке выхода из dfs
+
+void DFSTopologySort(int v) {
+  used[v] = true;
+  for (int u : g[v]) {
+    if (!used[u]) {
+      DFSTopologySort(u);
+    }
+  }
+  t.push_back(v);
+}
+
+void TopologicalSort() {
+  for (int v = 0; v < size; v++) {
+    if (!used[v]) {
+      DFSTopologySort(v);
+    }
+  }
+  reverse(t.begin(), t.end());
+}
+/*
+ Асимптотика: O(V + E)
+ */
+
+// Алгоритм Косарайю поиска компонент сильной связность
+
+/*
+ Две вершины ориентированного графа связаны сильно, если существует путь из одной в другую и наоборот. Иными словами, они обе лежат в каком-то цикле.
+ */
+
+/*
+ Алгоритм поиска компонент сильной связности
+ 1. Построить вспомогательный граф,
+ в котором направление всех рёбер изменено на противоположное.
+ 2. Запустить на вспомогательном графе топологическую сортировку.
+ 3. Раскрасить исходный граф, запуская DFS в порядке топологической сортировки.
+ */
+
+class Graph {
+  std::vector<std::vector<int>> g_;
+  std::vector<std::vector<int>> g_reversed_;
+  std::vector<int> visited_;
+  std::vector<int> order_;
+  
+  void DFSTopologySort(int v) {
+    visited_[v] = 1;
+    for (auto to : g_reversed_[v]) {
+      if (!visited_[to]) {
+        DFSTopologySort(to);
+      }
+    }
+    order_.push_back(v);
+  }
+  
+  void DFSColor(int v, int component) {
+    visited_[v] = component;
+    for (auto to : g_[v]) {
+      if (!visited_[to]) {
+        DFSColor(to, component);
+      }
+    }
+  }
+public:
+  Graph(int VertexCount) {
+    g_.resize(VertexCount);
+    g_reversed_.resize(VertexCount);
+  }
+  void AddEdge(int a, int b) {
+    g_[a].push_back(b);
+    g_reversed_[b].push_back(a);
+  }
+  std::vector<int> Kosarayo() {
+    visited_.assign(g_.size(), 0);
+    for (int v = 0; v < g_.size(); v++) {
+      if (!visited_[v]) {
+        DFSTopologySort(v);
+      }
+    }
+    std::reverse(order_.begin(), order_.end());
+    visited_.assign(g_.size(), 0);
+    int component_counter = 0;
+    for (auto to : order_) {
+      if (!visited_[to]) {
+        DFSColor(to, ++component_counter);
+      }
+    }
+    return visited_;
+  }
+};
+/*
+ Асимптотика: O(V + E)
+*/
