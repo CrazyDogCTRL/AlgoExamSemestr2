@@ -1,0 +1,60 @@
+#include <vector>
+#include <cstdint>
+#include <iostream>
+
+struct Edge {
+  size_t from;
+  size_t to;
+  Edge() : Edge(0, 0) {
+  }
+  Edge(size_t from, size_t to) : from(from), to(to) {
+  }
+};
+
+// Cписок смежности (неориентированный грая)
+class GraphAdjList {
+public:
+  GraphAdjList(size_t n_vertices, const std::vector<std::pair<size_t, size_t>> &edges) : adj_list_(n_vertices) {
+    for (size_t i = 0; i < edges.size(); i++) {
+      adj_list_[edges[i].first - 1].emplace_back(edges[i].first, edges[i].second);
+      adj_list_[edges[i].second - 1].emplace_back(edges[i].second, edges[i].first);
+    }
+  }
+private:
+  std::vector<std::vector<Edge>> adj_list_;
+};
+
+// Матрица смежности
+class AdjMatrix {
+public:
+  void Addbridge(size_t from, size_t to) {
+    adj_matrix_[from][to] = Edge(from, to);
+  }
+  
+  explicit AdjMatrix(size_t n_vertices) : adj_matrix_(n_vertices, std::vector<Edge>(n_vertices, Edge(0, 0))) {
+  }
+  std::vector<Edge>& operator[](size_t index) {
+    return adj_matrix_[index];
+  }
+private:
+  std::vector<std::vector<Edge>> adj_matrix_;
+};
+
+// Список ребер
+class GraphEdgeList {
+public:
+  GraphEdgeList(const std::vector<std::pair<size_t, size_t>> &edges) {
+    for (const auto& edge : edges) {
+      edge_list_.emplace_back(edge.first, edge.second);
+      edge_list_.emplace_back(edge.second, edge.first);
+    }
+  }
+  void PrintEdgeList() {
+    std::cout << "Edges in the graph:" << std::endl;
+    for (const auto& edge : edge_list_) {
+      std::cout << edge.from << " - " << edge.to << std::endl;
+    }
+  }
+private:
+  std::vector<Edge> edge_list_;
+};
