@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+
+#define INF std::numeric_limits<int>::max()
+// Форд-Белльман
+/*
+ Идея в том, что мы релаксируем по ребрам, сначала мы находим самое короткое расстояние, проходящее через 1 ребро, потом через 2 и тд, в отличие от Дейкстры можно использовать с ребрами отрицательного веса
+*/
+
+struct Edge {
+  int from;
+  int to;
+  int weight;
+  Edge() : Edge(0, 0, 0) {
+  }
+  Edge(int from, int to, int weight) : from(from), to(to), weight(weight) {
+  }
+};
+
+std::vector<int> FordBellman(int size, std::vector<Edge>& edges, int start) {
+  std::vector<int> dist(size, INF);
+  dist[start] = 0;
+  for (int i = 0; i < size - 1; ++i) {
+    for (auto& [a, b, weight] : edges) {
+      if (dist[a] != INF && dist[b] > dist[a] + weight) {
+        dist[b] = dist[a] + weight;
+      }
+    }
+  }
+  return dist;
+}
+
+/*
+ Асимпотика O(V * E)
+ */
