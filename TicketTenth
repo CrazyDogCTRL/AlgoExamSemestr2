@@ -1,0 +1,128 @@
+#include <vector>
+#include <cstdint>
+#include <iostream>
+#include <algorithm>
+
+struct Edge {
+  int64_t from;
+  int64_t to;
+  int64_t index;
+  Edge(int64_t from, int64_t to, int64_t index) : from(from), to(to), index(index) {
+  }
+};
+
+// Мосты
+class DirGraphAdjList {
+public:
+  DirGraphAdjList(int64_t n_vertices, const std::vector<Edge>& edges) : adj_list_(n_vertices) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+      adj_list_[edges[i].from].emplace_back(edges[i].to, i);
+      adj_list_[edges[i].to].emplace_back(edges[i].from, i);
+    }
+  }
+  std::vector<int64_t> FindBridges() {
+    std::vector<int64_t> d(adj_list_.size());
+    std::vector<int64_t> h(adj_list_.size());
+    std::vector<bool> used(adj_list_.size(), false);
+    for (size_t i = 0; i < adj_list_.size(); ++i) {
+      if (!used[i]) {
+        DFS(static_cast<int64_t>(i), -1, -1, d, h, used);
+      }
+    }
+    return bridges_;
+  }
+  
+private:
+  void DFS(int64_t v, int64_t parent, int64_t parent_edge_index, std::vector<int64_t>& d, std::vector<int64_t>& h,
+           std::vector<bool>& used) {
+    used[v] = true;
+    d[v] = h[v] = (parent == -1 ? 0 : h[parent] + 1);
+    for (auto [u, edge_index] : adj_list_[v]) {
+      if (edge_index == parent_edge_index) {
+        continue;
+      }
+      if (used[u]) {
+        d[v] = std::min(d[v], h[u]);
+      } else {
+        DFS(u, v, edge_index, d, h, used);
+        d[v] = std::min(d[v], d[u]);
+        if (d[u] > h[v]) {
+          bridges_.push_back(edge_index);
+        }
+      }
+    }
+  }
+  std::vector<int64_t> bridges_;
+  std::vector<std::vector<std::pair<int64_t, int64_t>>> adj_list_;
+};
+
+int main() {
+  int64_t n = 0;
+  int64_t m = 0;
+  std::cin >> n >> m;
+  std::vector<Edge> edges;
+  for (int64_t i = 0; i < m; ++i) {
+    int64_t from = 0;
+    int64_t to = 0;
+    std::cin >> from >> to;
+    edges.emplace_back(from - 1, to - 1, i);
+  }
+  DirGraphAdjList graph(n, edges);
+  std::vector<int64_t> bridges = graph.FindBridges();
+  std::sort(bridges.begin(), bridges.end());
+  std::cout << bridges.size() << '\n';
+  for (int64_t bridge : bridges) {
+    std::cout << bridge + 1 << '\n';
+  }
+  return 0;
+}
+
+// Точка сочленения:
+/*
+class DirGraphAdjList {
+public:
+  DirGraphAdjList(int64_t n_vertices, const std::vector<std::pair<int64_t, int64_t>>& edges) : adj_list_(n_vertices) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+      adj_list_[edges[i].first].emplace_back(edges[i].second);
+    }
+  }
+  std::vector<int64_t> FindArticulationPoints() {
+    std::vector<int64_t> d(adj_list_.size());
+    std::vector<int64_t> h(adj_list_.size());
+    std::vector<bool> used(adj_list_.size(), false);
+    for (size_t i = 0; i < adj_list_.size(); ++i) {
+      if (!used[i]) {
+        DFS(static_cast<int64_t>(i), -1, d, h, used);
+      }
+    }
+    return articulation_points_;
+  }
+  
+private:
+  void DFS(int64_t v, int64_t parent, std::vector<int64_t>& d, std::vector<int64_t>& h, std::vector<bool>& used) {
+    used[v] = true;
+    bool flag = false;
+    d[v] = h[v] = (parent == -1 ? 0 : h[parent] + 1);
+    int64_t children = 0;
+    for (auto u : adj_list_[v]) {
+      if (u != parent) {
+        if (used[u]) {
+          d[v] = std::min(d[v], h[u]);
+        } else {
+          DFS(u, v, d, h, used);
+          d[v] = std::min(d[v], d[u]);
+          if (h[v] <= d[u] && parent != -1) {
+            flag = true;
+          }
+          ++children;
+        }
+      }
+    }
+    if ((parent == -1 && children > 1) || (parent != -1 && flag)) {
+      articulation_points_.push_back(v);
+    }
+  }
+  std::vector<int64_t> articulation_points_;
+  std::vector<std::vector<int64_t>> adj_list_;
+};
+*/
