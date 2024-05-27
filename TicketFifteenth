@@ -1,0 +1,134 @@
+#include <iostream>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
+#include <vector>
+
+class Vector;
+class Point;
+class Segment;
+
+
+// Точка
+class Point {
+public:
+  int x;
+  int y;
+  Point(const int& x, const int& y) : x(x), y(y){};
+  bool operator==(const Point& point) const {
+    return x == point.x && y == point.y;
+  }
+  ~Point()  = default;
+};
+
+// Вектор
+class Vector {
+public:
+  int x;
+  int y;
+  Vector(const int& x, const int& y) : x(x), y(y){};
+  Vector(const Point& a, const Point& b) : x(b.x - a.x), y(b.y - a.y){};
+  double operator^(const Vector& vector) const {                          // Векторное произоведение (псевдовекторное)
+    return this->x * vector.y - this->y * vector.x;
+  }
+  double operator*(const Vector& vector) const {
+    return this->x * vector.x + this->y * vector.y;                       // Скалярное произведение
+  }
+  int LengthSquared() const {                                             // Длина вектора
+    return x * x + y * y;
+  }
+  ~Vector() = default;
+};
+
+// Отрезок
+class Segment {
+public:
+  Point start;
+  Point end;
+  Segment(const Point& start, const Point& end) : start(start), end(end) {
+  }
+  int Orientation(const Point& a, const Point& b, const Point& c) const {
+    int res = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
+    if (res == 0) { // На одной прямой
+      return 0;
+    }
+    if (res > 0) { // По часовой
+      return 1;
+    }
+    return -1;     // Против часовой
+  }
+  bool ContainsPoint(const Point& point) const  {
+    Vector v1(point.x - start.x, point.y - start.y);
+    Vector v2(end.x - start.x, end.y - start.y);
+    auto product = v1 ^ v2;
+    return (product == 0 && std::min(start.x, end.x) <= point.x && point.x <= std::max(start.x, end.x) &&
+            std::min(start.y, end.y) <= point.y && point.y <= std::max(start.y, end.y));
+  }
+  bool CrossSegment(const Segment& segment) const  {  // Пересечение отрезков
+    int o1 = Orientation(start, end, segment.start);
+    int o2 = Orientation(start, end, segment.end);
+    int o3 = Orientation(segment.start, segment.end, start);
+    int o4 = Orientation(segment.start, segment.end, end);
+    if (o1 != o2 && o3 != o4) {
+      return true;
+    }
+    if (o1 == 0 && ContainsPoint(segment.start)) {
+      return true;
+    }
+    if (o2 == 0 && ContainsPoint(segment.end)) {
+      return true;
+    }
+    if (o3 == 0 && segment.ContainsPoint(start)) {
+      return true;
+    }
+    if (o4 == 0 && segment.ContainsPoint(end)) {
+      return true;
+    }
+    return false;
+  }
+  ~Segment()  = default;
+};
+
+// Многоугольник
+class Polygon {
+public:
+  std::vector<Point> points;
+  size_t n_vertices;
+  Polygon(const std::vector<Point>& points, size_t n_vertices) : points(points), n_vertices(n_vertices) {
+  }
+  Polygon(std::vector<Point>&& points, size_t n_vertices)
+  : points(std::move(points)), n_vertices(n_vertices) {
+  }
+  // нужно направить луч вправо и посчитать количество пересечений, если четно, то точка внутри, иначе нет
+  bool ContainsPoint(const Point& a) const  {
+    int intersections = 0;
+    for (size_t i = 0, j = n_vertices - 1; i < n_vertices; j = i++) {
+      const Point& v1 = points[i];
+      const Point& v2 = points[j];
+      if (Point(a.x, a.y) == v1 || Point(a.x, a.y) == v2) {
+        return true;
+      }
+      Segment edge(v1, v2);
+      if (edge.ContainsPoint(a)) {
+        return true;
+      }
+      if ((v1.y > a.y) != (v2.y > a.y) && a.x < (v2.x - v1.x) * (a.y - v1.y) / (v2.y - v1.y) + v1.x) {
+        intersections++;
+      }
+    }
+    return (intersections % 2 == 1);
+  }
+  ~Polygon()  = default;
+};
+
+// Площадь
+double PolygonArea(const std::vector<Vector>& points) {
+  double area = 0.0;
+  auto n = points.size();
+  for (size_t i = 0; i < n; ++i) {
+    const Vector& v1 = points[i];
+    const Vector& v2 = points[(i + 1) % n];
+    area += v1 ^ v2;
+  }
+  return 0.5 * std::abs(area);
+}
