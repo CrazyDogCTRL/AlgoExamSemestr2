@@ -55,3 +55,4 @@ std::vector<Vector> Jarvis(std::vector<Vector> points) {
   }
   return hull;
 }
+// Асимптотика O(h*n), где h - количество точек в оболочке, n - общее количество точек
