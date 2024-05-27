@@ -1,0 +1,57 @@
+#include <iostream>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
+#include <vector>
+
+// Полиномиальное хеширование (б/д)
+struct PolynomialHash {
+  int64_t operator()(const std::string &str) {
+    const static int32_t p = 1000000007;
+    const static int16_t x = 263;
+    int64_t sum = 0;
+    int64_t x_pow = 1;
+    for (size_t i = 0; i < str.length(); i++) {
+      sum = (sum + (str[i] * x_pow % p)) % p;
+      x_pow = (x_pow * x) % p;
+    }
+    return sum;
+  }
+};
+
+// Префикс-функция
+std::vector<int> Zfunction(std::string s) {
+  int n = static_cast<int>(s.size());
+  std::vector<int> z(n, 0);
+  int l = 0;
+  int r = 0;
+  for (int i = 1; i < n; i++) {
+    if (i <= r) {
+      z[i] = std::min(r - i + 1, z[i - l]);
+    }
+    while (i + z[i] < n && s[z[i]] == s[i + z[i]]) {
+      z[i]++;
+    }
+    if (i + z[i] - 1 > r) {
+      r = i + z[i] - 1;
+      l = i;
+    }
+  }
+  return z;
+}
+// Асимптотика O(N)
+
+// КМП (Кнут-Моррис-Пратт)
+void KnuthMorrisPrattWithZFunction(const std::string& text, const std::string& word) {
+  std::string combined = word + "#" + text;
+  auto z = Zfunction(combined);
+  int wordLength = static_cast<int>(word.size());
+  int combinedLength = static_cast<int>(combined.size());
+  
+  for (int i = wordLength + 1; i < combinedLength; ++i) {
+    if (z[i] == wordLength) {
+      std::cout << i - wordLength - 1 << '\n';
+    }
+  }
+}
+// Асимптотика O(n + m), длина текста и образа соотвественно
