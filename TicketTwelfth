@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdint>
+
+struct Edge {
+  size_t from;
+  size_t to;
+  size_t weight;
+  Edge() : Edge(0, 0, 0) {
+  }
+  Edge(size_t from, size_t to, size_t weight) : from(from), to(to), weight(weight) {
+  }
+  bool operator<(const Edge& that) const {
+    return this->weight < that.weight;
+  }
+};
+
+// Система непересекающихся множеств с весовой эвристикой (Подвешиваем за более тяжелую)
+class DSU {
+public:
+  explicit DSU(size_t n) : parent_(n), rank_(n, 1) {
+    for (size_t i = 0; i < n; ++i) {
+      parent_[i] = i;
+    }
+  }
+  bool Unite(size_t i, size_t j) {
+    size_t leader_i = GetLeader(i);
+    size_t leader_j = GetLeader(j);
+    if (leader_i == leader_j) {
+      return false;
+    }
+    if (rank_[leader_i] > rank_[leader_j]) {
+      std::swap(leader_i, leader_j); // i - min, j - max
+    }
+    rank_[leader_j] += rank_[leader_i];
+    parent_[leader_i] = leader_j; // j - корень
+    return true;
+  }
+  
+private:
+  size_t GetLeader(size_t i) {
+    if (parent_[i] != i) {
+      parent_[i] = GetLeader(parent_[i]);
+    }
+    return parent_[i];
+  }
+  std::vector<size_t> parent_;
+  std::vector<size_t> rank_;
+};
+/*
+ Весовая эвристика
+ void unite(int a, int b) {
+ a = leader(a), b = leader(b);
+ if (h[a] > h[b])
+ swap(a, b);
+ h[b] = max(h[b], h[a] + 1);
+ p[a] = b;
+ }
+ */
+// Асмптотика - O(a(N), где a - функция Аккермана, a(N) < 4
+
+//Краскал (ребра нужно отсортировать по неубыванию)
+size_t KruskalMST(std::vector<Edge>& edges, size_t n) {
+  DSU dsu(n);
+  size_t res = 0;
+  for (auto& edge : edges) {
+    if (dsu.Unite(edge.from, edge.to)) {
+      res += edge.weight;
+    }
+  }
+  return res;
+}
+// Асимптотика - O(E*LogE)
