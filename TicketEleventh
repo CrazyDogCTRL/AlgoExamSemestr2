@@ -1,0 +1,93 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+
+#define INF std::numeric_limits<int64_t>::max()
+
+struct Edge {
+  size_t from;
+  size_t to;
+  int64_t weight;
+  Edge() : Edge(0, 0, 0) {
+  }
+  Edge(size_t from, size_t to, int64_t weight) : from(from), to(to), weight(weight) {
+  }
+};
+
+// Алгоритм Прима для поиска миностова, реализация за O(V^2)
+class DirGraphAdjList {
+public:
+  DirGraphAdjList(size_t n_vertices, const std::vector<Edge> &edges) : adj_list_(n_vertices) {
+    for (const Edge &edge : edges) {
+      adj_list_[edge.from].emplace_back(edge);
+    }
+  }
+  int64_t MSTPrim() {
+    std::vector<bool> used(adj_list_.size(), false);
+    int64_t result = 0;
+    used[0] = true;
+    for (size_t i = 0; i < adj_list_.size() - 1; ++i) {
+      size_t to = 0;
+      int64_t min_w = INF;
+      for (size_t from = 0; from < adj_list_.size(); ++from) {
+        if (used[from]) {
+          for (Edge edge : adj_list_[from]) {
+            if (!used[edge.to] && min_w > edge.weight && used[edge.from]) {
+              min_w = edge.weight;
+              to = edge.to;
+            }
+          }
+        }
+      }
+      used[to] = true;
+      result += min_w;
+    }
+    return result;
+  }
+  
+private:
+  std::vector<std::vector<Edge>> adj_list_;
+};
+
+/* class DirGraphAdjList {
+public:
+  DirGraphAdjList(uint64_t n_vertices, const std::vector<std::vector<Edge>>& edges) : adj_list_(n_vertices) {
+    for (uint64_t from = 0; from < edges.size(); ++from) {
+      for (const Edge& edge : edges[from]) {
+        adj_list_[from].emplace_back(edge);
+      }
+    }
+  }
+  uint64_t MSTPrim() {
+    std::vector<uint64_t> min_weight(adj_list_.size(), INF);
+    std::vector<bool> used(adj_list_.size(), false);
+    uint64_t weight = 0;
+    std::priority_queue<std::pair<uint64_t, uint64_t>, std::vector<std::pair<uint64_t, uint64_t>>,
+    std::greater<std::pair<uint64_t, uint64_t>>>
+    queue;
+    min_weight[0] = 0;
+    queue.emplace(0, 0);
+    while (!queue.empty()) {
+      uint64_t from = queue.top().second;
+      queue.pop();
+      if (used[from]) {
+        continue;
+      }
+      used[from] = true;
+      weight += min_weight[from];
+      for (auto edge : adj_list_[from]) {
+        uint64_t to = edge.to;
+        uint64_t heft = edge.weight;
+        if (!used[to] && heft < min_weight[to]) {
+          min_weight[to] = heft;
+          queue.emplace(min_weight[to], to);
+        }
+      }
+    }
+    return weight;
+  }
+  
+private:
+  std::vector<std::vector<Edge>> adj_list_;
+};
+*/
