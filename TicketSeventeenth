@@ -1,0 +1,62 @@
+#include <iostream>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
+#include <vector>
+
+class Vector;
+class Vector;
+class Segment;
+
+
+class Vector {
+public:
+  int x;
+  int y;
+  Vector(const int& x, const int& y) : x(x), y(y){};
+  Vector(const Vector& a, const Vector& b) : x(b.x - a.x), y(b.y - a.y){};
+  double operator^(const Vector& vector) const {
+    return this->x * vector.y - this->y * vector.x;
+  }
+  double operator*(const Vector& vector) const {
+    return this->x * vector.x + this->y * vector.y;
+  }
+  Vector operator-(const Vector& vector) const {
+    return Vector(this->x - vector.x, this->y - vector.y);
+  }
+  bool operator==(const Vector& vector) const {
+    return (this->x == vector.x && this->y == vector.y);
+  }
+  ~Vector() = default;
+};
+
+std::vector<Vector> graham(std::vector<Vector> points) {
+    // находим p0, как самую нижнюю и левую точку
+  Vector p0 = points[0];
+  for (Vector p : points) {
+    if (p.x < p0.x || (p.x == p0.x && p.y < p0.y)) {
+      p0 = p;
+    }
+  }
+  // сортируем точки по полярному углу
+  std::sort(points.begin(), points.end(), [&](Vector a, Vector b){
+    return ((a - p0) ^ (b - p0)) > 0;
+  });
+  std::vector<Vector> hull;
+  for (Vector p : points) {
+      // удаляем последнюю точку со стека пока она образует невыпуклость
+    while (hull.size() >= 2) {
+      Vector new_vector = p - hull.back();
+      Vector last_vector = hull.back() - hull[hull.size() - 2];
+        // если два последних вектора заворачивают влево, удаляем последнюю точку
+      if ((new_vector ^ last_vector) > 0) {
+        hull.pop_back();
+      } else {
+        break;
+      }
+    }
+    hull.push_back(p);
+  }
+  return hull;
+}
+// Асимптотика O(n * logn)
