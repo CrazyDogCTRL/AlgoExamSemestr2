@@ -1,0 +1,57 @@
+#include <iostream>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
+#include <vector>
+
+class Vector;
+class Vector;
+class Segment;
+
+
+class Vector {
+public:
+  int x;
+  int y;
+  Vector(const int& x, const int& y) : x(x), y(y){};
+  Vector(const Vector& a, const Vector& b) : x(b.x - a.x), y(b.y - a.y){};
+  double operator^(const Vector& vector) const {
+    return this->x * vector.y - this->y * vector.x;
+  }
+  double operator*(const Vector& vector) const {
+    return this->x * vector.x + this->y * vector.y;
+  }
+  Vector operator-(const Vector& vector) const {
+    return Vector(this->x - vector.x, this->y - vector.y);
+  }
+  bool operator==(const Vector& vector) const {
+    return (this->x == vector.x && this->y == vector.y);
+  }
+  ~Vector() = default;
+};
+
+std::vector<Vector> Jarvis(std::vector<Vector> points) {
+  Vector p0 = points[0];
+  for (Vector p : points) { // Выбираем левый нижний
+    if (p.x < p0.x || (p.x == p0.x && p.y < p0.y)) {
+      p0 = p;
+    }
+  }
+  std::vector<Vector> hull = {p0};
+  while (true) {
+    Vector t = p0; // кандидат на следующую точку
+    for (Vector p : points) {
+        // лучше никакие полярные углы не считать
+      if (((p - p0)^(t - p0)) > 0) {
+        t = p;
+      }
+    }
+    if (t == p0) {
+      continue;
+    } else {
+      p0 = t;
+      hull.push_back(t);
+    }
+  }
+  return hull;
+}
