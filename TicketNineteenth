@@ -19,7 +19,7 @@ struct PolynomialHash {
   }
 };
 
-// Префикс-функция
+// Z-функция
 std::vector<int> Zfunction(std::string s) {
   int n = static_cast<int>(s.size());
   std::vector<int> z(n, 0);
