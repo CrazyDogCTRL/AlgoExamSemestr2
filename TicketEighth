@@ -33,7 +33,7 @@ std::vector<int> FordBellman(int size, std::vector<Edge>& edges, int start) {
 /*
  Асимпотика O(V * E)
  улучшения:
- как только перестала проходить релоксация, то можно break
+ как только перестала проходить релаксация, то можно break
  */
 
 /*
